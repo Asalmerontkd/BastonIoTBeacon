@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
@@ -13,8 +14,18 @@ import org.altbeacon.beacon.Identifier;
 import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.Collection;
+
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class Beacon extends AppCompatActivity implements BeaconConsumer {
     TextView estado;
@@ -134,6 +145,7 @@ public class Beacon extends AppCompatActivity implements BeaconConsumer {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            postear(finalSalida);
                             estado.setText(finalSalida);
                             distancia.setText("Distancia: " + oneBeacon.getDistance() +"\nPrecisión: "+ precision +"\n id:" + oneBeacon.getId1() + " / " + oneBeacon.getId2() + " / " + oneBeacon.getId3());
                         }
@@ -149,5 +161,38 @@ public class Beacon extends AppCompatActivity implements BeaconConsumer {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+    }
+
+    public void postear(final String salida)
+    {
+        JSONObject jo = new JSONObject();
+
+        try {
+            jo.put("comentario", salida);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        MediaType JSON = MediaType.parse("application/json;charset=utf-8");
+        RequestBody Body = RequestBody.create(JSON, jo.toString());
+
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://myapprei.herokuapp.com")
+                .build();
+
+        ApiService access = retrofit.create(ApiService.class);
+        Call<ResponseBody> call = access.getCall(Body);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+
+            }
+        });
     }
 }

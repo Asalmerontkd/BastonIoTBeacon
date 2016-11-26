@@ -6,9 +6,12 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.google.firebase.iid.FirebaseInstanceId;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,6 +30,9 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
+        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
+        System.out.print("Refreshed token:  "+refreshedToken);
+        Log.d("Refreshed token: ", refreshedToken);
     }
 
     @Override
