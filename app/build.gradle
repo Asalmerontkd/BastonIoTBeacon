@@ -31,5 +31,6 @@ dependencies {
     compile 'com.google.firebase:firebase-messaging:9.6.1'
     compile 'com.squareup.retrofit2:retrofit:2.1.0'
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
+    compile 'com.microsoft.azure.iothub-java-client:iothub-java-device-client:1.0.7'
 }
 apply plugin: 'com.google.gms.google-services'
