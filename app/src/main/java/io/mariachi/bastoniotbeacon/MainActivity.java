@@ -3,6 +3,8 @@ package io.mariachi.bastoniotbeacon;
 import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -11,6 +13,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
+
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,6 +31,7 @@ import retrofit2.Retrofit;
 
 public class MainActivity extends AppCompatActivity {
     BluetoothAdapter bluetoothAdapter;
+    public double lat, lon;
 
 
     @Override
@@ -45,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
+
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter==null) // If null -> cerrar la aplicación, el dispositivo no tiene bluetooth
         {
@@ -88,7 +93,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     //TODO separar al corazon por que se envia a cada minuto, giro y cabeceo se envia cuando aaron quiera
 
     public void enviar(View v) //Metodo para envias datos a UBIDOTS, pasar parametros (corazon, giro, cabeceo) y dejar de depender del boton
@@ -100,12 +104,16 @@ public class MainActivity extends AppCompatActivity {
         JSONObject corazon = new JSONObject();
         JSONObject giro = new JSONObject();
         JSONObject cabeceo = new JSONObject();
+        JSONObject gpsObject = new JSONObject();
 
         Random rand = new Random();
 
         try {
             //TODO sustituir los random por los datos del arduino
-            corazon.put("value", rand.nextInt(200));
+            corazon.put("value", rand.nextInt(110));
+            gpsObject.put("lat", 19.4378594);
+            gpsObject.put("lng", -99.1622319);
+            corazon.put("context",gpsObject);
             giro.put("value", rand.nextInt(200));
             cabeceo.put("value", rand.nextInt(200));
         } catch (JSONException e) {
@@ -118,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
         RequestBody bodyCabeceo = RequestBody.create(JSON, cabeceo.toString());
 
         //Toast.makeText(this, "datacora: "+corazon.toString()+"\ndataGiro: "+giro.toString()+"\ndataCabeceo: "+cabeceo.toString(), Toast.LENGTH_LONG).show();
-
+        Toast.makeText(this, "GPS: "+gpsObject.toString(), Toast.LENGTH_SHORT).show();
 
         ApiService access = retrofitUbidot.create(ApiService.class);//Instancia a la ApiService
 

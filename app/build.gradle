@@ -30,5 +30,6 @@ dependencies {
     compile 'org.altbeacon:android-beacon-library:2.9'
     compile 'com.squareup.retrofit2:retrofit:2.1.0'
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
-    compile 'com.microsoft.azure.iothub-java-client:iothub-java-device-client:1.0.7'
+    compile 'com.google.android.gms:play-services:9.2.0'
+    compile 'com.google.android.gms:play-services-location:9.2.0'
 }
