@@ -20,4 +20,16 @@ public interface ApiService {
 
     @POST ("/api/v2/baston/")
     Call<ResponseBody> getCall(@Body RequestBody body);
+
+    @Headers("X-Auth-Token: jQcfiKL7fh0R5VuqO2p3fbXzpUJ6Uq")
+    @POST ("/api/v1.6/variables/58411e7b7625422167f95667/values")
+    Call<ResponseBody> setCorazon(@Body RequestBody body);
+
+    @Headers("X-Auth-Token: jQcfiKL7fh0R5VuqO2p3fbXzpUJ6Uq")
+    @POST ("/api/v1.6/variables/58411ed376254223ad7cd2fb/values")
+    Call<ResponseBody> setGiro(@Body RequestBody body);
+
+    @Headers("X-Auth-Token: jQcfiKL7fh0R5VuqO2p3fbXzpUJ6Uq")
+    @POST ("/api/v1.6/variables/58411ee8762542247ca34f20/values")
+    Call<ResponseBody> setCabeceo(@Body RequestBody body);
 }

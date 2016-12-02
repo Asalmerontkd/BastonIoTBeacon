@@ -22,9 +22,9 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Receive Messages"
+        android:text="Test Ubidots"
         android:id="@+id/btnSend"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="70dp"
-        android:onClick="btnReceiveOnClick" />
+        android:onClick="enviar" />
 </LinearLayout>

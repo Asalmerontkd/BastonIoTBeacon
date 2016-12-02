@@ -1,34 +1,30 @@
 package io.mariachi.bastoniotbeacon;
 
 import android.content.Intent;
-import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Button;
+import android.widget.Toast;
 
-import com.microsoft.azure.iothub.DeviceClient;
-import com.microsoft.azure.iothub.IotHubClientProtocol;
-import com.microsoft.azure.iothub.IotHubEventCallback;
-import com.microsoft.azure.iothub.IotHubMessageResult;
-import com.microsoft.azure.iothub.IotHubStatusCode;
-import com.microsoft.azure.iothub.Message;
-import com.microsoft.azure.iothub.MessageCallback;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.util.Random;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.Scanner;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
-import com.google.firebase.iid.FirebaseInstanceId;
 
 public class MainActivity extends AppCompatActivity {
-    String connString = "HostName=BastonInteligente.azure-devices.net;DeviceId=MyNewDevice;SharedAccessKey=idd7meI5BG33lyRWeGzhdgwBShjYRCOLdOWWurZx/Oo=";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,225 +41,73 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
-        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
-        System.out.print("Refreshed token:  "+refreshedToken);
-        Log.d("Refreshed token: ", refreshedToken);
-        try {
-            SendMessage();
-        }
-        catch(IOException e1)
-        {
-            System.out.println("Exception while opening IoTHub connection: " + e1.toString());
-        }
-        catch(Exception e2)
-        {
-            System.out.println("Exception while opening IoTHub connection: " + e2.toString());
-        }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    public void SendMessage() throws URISyntaxException, IOException
+    public void enviar(View v)
     {
-        // Comment/uncomment from lines below to use HTTPS or MQTT protocol
-        IotHubClientProtocol protocol = IotHubClientProtocol.HTTPS;
-        //  IotHubClientProtocol protocol = IotHubClientProtocol.MQTT;
+        Retrofit retrofitUbidot = new Retrofit.Builder()
+                .baseUrl("http://things.ubidots.com")
+                .build();
 
-        DeviceClient client = new DeviceClient(connString, protocol);
+        JSONObject corazon = new JSONObject();
+        JSONObject giro = new JSONObject();
+        JSONObject cabeceo = new JSONObject();
 
-        try {
-            client.open();
-        }
-        catch(IOException e1)
-        {
-            System.out.println("Exception while opening IoTHub connection: " + e1.toString());
-        }
-        catch(Exception e2)
-        {
-            System.out.println("Exception while opening IoTHub connection: " + e2.toString());
-        }
-
-        for (int i = 0; i < 5; ++i)
-        {
-            String msgStr = "Event Message " + Integer.toString(i);
-            try
-            {
-                Message msg = new Message(msgStr);
-                msg.setProperty("messageCount", Integer.toString(i));
-                System.out.println(msgStr);
-                EventCallback eventCallback = new EventCallback();
-                client.sendEventAsync(msg, eventCallback, i);
-            }
-            catch (Exception e)
-            {
-            }
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        client.close();
-    }
-
-    public void btnReceiveOnClick(View v) throws URISyntaxException, IOException {
-        Button button = (Button) v;
-
-        // Comment/uncomment from lines below to use HTTPS or MQTT protocol
-        // IotHubClientProtocol protocol = IotHubClientProtocol.HTTPS;
-        IotHubClientProtocol protocol = IotHubClientProtocol.MQTT;
-
-        DeviceClient client = new DeviceClient(connString, protocol);
-
-        if (protocol == IotHubClientProtocol.MQTT)
-        {
-            MessageCallbackMqtt callback = new MessageCallbackMqtt();
-            Counter counter = new Counter(0);
-            client.setMessageCallback(callback, counter);
-        }
-        else
-        {
-            MessageCallback callback = new MessageCallback();
-            Counter counter = new Counter(0);
-            client.setMessageCallback(callback, counter);
-        }
+        Random rand = new Random();
 
         try {
-            client.open();
-        }
-        catch(IOException e1)
-        {
-            System.out.println("Exception while opening IoTHub connection: " + e1.toString());
-        }
-        catch(Exception e2)
-        {
-            System.out.println("Exception while opening IoTHub connection: " + e2.toString());
-        }
-
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
+            //TODO sustituir los random por los datos del arduino
+            corazon.put("value", rand.nextInt(100));
+            giro.put("value", rand.nextInt(100));
+            cabeceo.put("value", rand.nextInt(100));
+        } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        client.close();
-    }
+        MediaType JSON = MediaType.parse("application/json;charset=utf-8");
+        RequestBody bodyCorazon = RequestBody.create(JSON, corazon.toString());
+        RequestBody bodyGiro = RequestBody.create(JSON, giro.toString());
+        RequestBody bodyCabeceo = RequestBody.create(JSON, cabeceo.toString());
 
-    // Our MQTT doesn't support abandon/reject, so we will only display the messaged received
-    // from IoTHub and return COMPLETE
-    public class MessageCallbackMqtt implements com.microsoft.azure.iothub.MessageCallback
-    {
-        String mensaje;
-        String contenido;
+        Toast.makeText(this, "datacora: "+corazon.toString()+"\ndataGiro: "+giro.toString()+"\ndataCabeceo: "+cabeceo.toString(), Toast.LENGTH_LONG).show();
 
-        public IotHubMessageResult execute(Message msg, Object context)
-        {
-            Counter counter = (Counter) context;
-            mensaje = "Received message " + counter.toString();
-            contenido = " with content: " + new String(msg.getBytes(), Message.DEFAULT_IOTHUB_MESSAGE_CHARSET);
+        ApiService access = retrofitUbidot.create(ApiService.class);
+        Call<ResponseBody> cora = access.setCorazon(bodyCorazon);
+        cora.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 
-            System.out.println(
-                    "Received message " + counter.toString()
-                            + " with content: " + new String(msg.getBytes(), Message.DEFAULT_IOTHUB_MESSAGE_CHARSET));
-
-            Log.d("MyLog", mensaje+contenido);
-
-
-            counter.increment();
-
-            return IotHubMessageResult.COMPLETE;
-        }
-
-    }
-
-    protected static class EventCallback implements IotHubEventCallback {
-        public void execute(IotHubStatusCode status, Object context){
-            Integer i = (Integer) context;
-            System.out.println("IoT Hub responded to message "+i.toString()
-                    + " with status " + status.name());
-        }
-    }
-
-    protected static class MessageCallback implements com.microsoft.azure.iothub.MessageCallback
-    {
-        public IotHubMessageResult execute(Message msg, Object context)
-        {
-            Counter counter = (Counter) context;
-            System.out.println(
-                    "Received message " + counter.toString()
-                            + " with content: " + new String(msg.getBytes(), Message.DEFAULT_IOTHUB_MESSAGE_CHARSET));
-
-            int switchVal = counter.get() % 3;
-            IotHubMessageResult res;
-            switch (switchVal)
-            {
-                case 0:
-                    res = IotHubMessageResult.COMPLETE;
-                    break;
-                case 1:
-                    res = IotHubMessageResult.ABANDON;
-                    break;
-                case 2:
-                    res = IotHubMessageResult.REJECT;
-                    break;
-                default:
-                    // should never happen.
-                    throw new IllegalStateException("Invalid message result specified.");
             }
 
-            System.out.println("Responding to message " + counter.toString() + " with " + res.name());
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
 
-            counter.increment();
+            }
+        });
+        Call<ResponseBody> gir = access.setGiro(bodyGiro);
+        gir.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 
-            return res;
-        }
-    }
+            }
 
-    /** Used as a counter in the message callback. */
-    protected static class Counter
-    {
-        protected int num;
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
 
-        public Counter(int num)
-        {
-            this.num = num;
-        }
+            }
+        });
+        Call<ResponseBody> cabe = access.setCabeceo(bodyCabeceo);
+        cabe.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
 
-        public int get()
-        {
-            return this.num;
-        }
+            }
 
-        public void increment()
-        {
-            this.num++;
-        }
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
 
-        @Override
-        public String toString()
-        {
-            return Integer.toString(this.num);
-        }
+            }
+        });
+
     }
 }
