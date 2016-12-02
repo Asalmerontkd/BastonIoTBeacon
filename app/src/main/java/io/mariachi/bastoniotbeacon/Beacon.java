@@ -39,11 +39,7 @@ public class Beacon extends AppCompatActivity implements BeaconConsumer {
         setContentView(R.layout.activity_beacon);
         estado = (TextView) findViewById(R.id.txtEstado);
         distancia = (TextView) findViewById(R.id.txtDistancia);
-    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
         beaconManager = BeaconManager.getInstanceForApplication(this);
         beaconManager.getBeaconParsers().add(new BeaconParser()
                 .setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"));
@@ -56,15 +52,12 @@ public class Beacon extends AppCompatActivity implements BeaconConsumer {
         beaconManager.unbind(this);
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        beaconManager.unbind(this);
-    }
+
+    //Identifier.parse("23a01af0-232a-4518-9c0e-323fb773f5ef")
 
     @Override
     public void onBeaconServiceConnect() {
-        final Region region = new Region("myBeaons", Identifier.parse("23a01af0-232a-4518-9c0e-323fb773f5ef"), null, null);
+        final Region region = new Region("myBeaons", null, null, null);
 
         beaconManager.setMonitorNotifier(new MonitorNotifier() {
             @Override
@@ -147,7 +140,7 @@ public class Beacon extends AppCompatActivity implements BeaconConsumer {
                         public void run() {
                             postear(finalSalida);
                             estado.setText(finalSalida);
-                            distancia.setText("Distancia: " + oneBeacon.getDistance() +"\nPrecisión: "+ precision +"\n id:" + oneBeacon.getId1() + " / " + oneBeacon.getId2() + " / " + oneBeacon.getId3());
+                            distancia.setText("Distancia: " + oneBeacon.getDistance() +"\nPrecisión: "+ precision +" metros.\n id:" + oneBeacon.getId1() + " / " + oneBeacon.getId2() + " / " + oneBeacon.getId3());
                         }
                     });
 
