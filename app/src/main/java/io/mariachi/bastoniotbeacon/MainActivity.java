@@ -1,11 +1,17 @@
 package io.mariachi.bastoniotbeacon;
 
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
+import android.location.LocationManager;
+import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -29,9 +35,11 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LocationListener {
     BluetoothAdapter bluetoothAdapter;
     public double lat, lon;
+    private LocationManager locationManager;
+    private String provider;
 
 
     @Override
@@ -50,8 +58,43 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+        boolean enabled = service
+                .isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+// check if enabled and if not send user to the GSP settings
+// Better solution would be to display a dialog and suggesting to
+// go to the settings
+        if (!enabled) {
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
+        }
+
+        // Get the location manager
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        Criteria criteria = new Criteria();
+        provider = locationManager.getBestProvider(criteria, false);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        Location location = locationManager.getLastKnownLocation(provider);
+
+        if (location != null) {
+            System.out.println("Provider " + provider + " has been selected.");
+            onLocationChanged(location);
+        }
+
+
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (bluetoothAdapter==null) // If null -> cerrar la aplicación, el dispositivo no tiene bluetooth
+        if (bluetoothAdapter == null) // If null -> cerrar la aplicación, el dispositivo no tiene bluetooth
         {
             AlertDialog.Builder alerta = new AlertDialog.Builder(this);
             alerta.setMessage("Bluetooth no encontrado en el dispositivo.");
@@ -66,8 +109,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             alerta.show();
-        }
-        else if (!bluetoothAdapter.isEnabled()) //if Bluetooth no esta activo
+        } else if (!bluetoothAdapter.isEnabled()) //if Bluetooth no esta activo
         {
             AlertDialog.Builder activaBT = new AlertDialog.Builder(this);
             activaBT.setMessage("El bluetooth no se encuentra activo.\n¿Desea activarlo?");
@@ -93,6 +135,41 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /* Request updates at startup */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        locationManager.requestLocationUpdates(provider, 400, 1, this);
+    }
+
+    /* Remove the locationlistener updates when Activity is paused */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        locationManager.removeUpdates(this);
+    }
+
+
     //TODO separar al corazon por que se envia a cada minuto, giro y cabeceo se envia cuando aaron quiera
 
     public void enviar(View v) //Metodo para envias datos a UBIDOTS, pasar parametros (corazon, giro, cabeceo) y dejar de depender del boton
@@ -111,8 +188,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             //TODO sustituir los random por los datos del arduino
             corazon.put("value", rand.nextInt(110));
-            gpsObject.put("lat", 19.4378594);
-            gpsObject.put("lng", -99.1622319);
+            gpsObject.put("lat", lat);
+            gpsObject.put("lng", lon);
             corazon.put("context",gpsObject);
             giro.put("value", rand.nextInt(200));
             cabeceo.put("value", rand.nextInt(200));
@@ -171,6 +248,28 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        lat=location.getLatitude();
+        lon=location.getLongitude();
+
+    }
+
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
 
     }
 }
